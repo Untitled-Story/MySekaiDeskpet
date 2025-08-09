@@ -86,6 +86,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          name: MySekaiDesktop ${{ github.ref_name }}
+          name: MySekaiDeskpet ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           files: build-artifacts/*
