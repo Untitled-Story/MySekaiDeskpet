@@ -1,34 +1,33 @@
-# my-sekai-deskpet
+# My Sekai Deskpet
 
-A minimal Electron application with TypeScript
+A deskpet for Project SEKAI chibi model
 
-## Recommended IDE Setup
+## Usage
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+Download your model using the following structure:
 
-## Project Setup
-
-### Install
-
-```bash
-$ pnpm install
+```
+Running Directory
+| - models
+| | - config.json
+| | - model.json # The skeleton file in json
+| | - sekai_atlas.atlas
+| | - sekai_atlas.png
 ```
 
-### Development
+The structure of Config is as follows:
 
-```bash
-$ pnpm dev
-```
-
-### Build
-
-```bash
-# For windows
-$ pnpm build:win
-
-# For macOS
-$ pnpm build:mac
-
-# For Linux
-$ pnpm build:linux
+```json
+{
+  "idle": "v2_w_happy_idle01_f",
+  "frequencyMin": 10,
+  "frequencyMax": 15,
+  "randoms": [
+    "v2_m_cool_surprise01_f",
+    "v2_m_happy_doubt01_f",
+    "v2_m_happy_joy01_f",
+    "v2_m_happy_laugh01_f",
+    "v2_m_pure_joy01_f"
+  ]
+}
 ```
