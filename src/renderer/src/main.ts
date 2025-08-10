@@ -98,8 +98,8 @@ async function doAThing(): Promise<void> {
   })
   spine.pivot.set(0.5)
   spine.scale.set(0.3)
-  spine.x = app.canvas.width / 2
-  spine.y = app.canvas.height / 1.1
+  spine.x = app.screen.width / 2
+  spine.y = app.screen.height / 1.1
   spine.state.setAnimation(0, config.idle, true)
   setTimeout(() => {
     scheduleRandomAnimation(spine, config)
