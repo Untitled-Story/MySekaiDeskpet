@@ -1,11 +1,12 @@
-import { Application, Assets } from 'pixi.js'
-import { Spine } from '@esotericsoftware/spine-pixi-v8'
+import { Application, Assets, Ticker } from 'pixi.js'
+import { Spine, TrackEntry } from '@esotericsoftware/spine-pixi-v8'
 import '@pixi/unsafe-eval'
 import Config from './config'
 
 let isDragging = false
 let startX: number, startY: number
 let randomIntervalTimer: NodeJS.Timeout | null = null
+let spine: Spine
 
 function init(): void {
   window.addEventListener('DOMContentLoaded', async () => {
@@ -49,14 +50,44 @@ async function scheduleRandomAnimation(spine: Spine, config: Config): Promise<vo
   const delay = getRandomIntInclusive(config.frequencyMin, config.frequencyMax) * 1000
   console.info(`Next random animation delay: ${delay}ms`)
 
-  randomIntervalTimer = setTimeout(() => {
+  randomIntervalTimer = setTimeout(async () => {
     if (!spine.destroyed && config.randoms?.length) {
+      if (config.enableWalk) {
+        if (Math.random() < config.walkProbability) {
+          console.info('Trigger walk')
+          let direction = Math.random() < 0.5 ? -1 : 1
+
+          // Left: 1, Right: -1
+
+          const size: { width: number; height: number } =
+            await window.electron.ipcRenderer.invoke('get-screen-size')
+          const position: { x: number; y: number } =
+            await window.electron.ipcRenderer.invoke('get-position')
+
+          if (direction == 1 && position.x - 200 <= 0) {
+            direction = -1
+          } else if (direction == -1 && position.x + 200 >= size.width) {
+            direction = 1
+          }
+
+          console.info(`Confirm direction: ${direction == 1 ? 'left' : 'right'}`)
+
+          flip(direction)
+          const walk_entry = spine.state.setAnimation(0, config.walkAnim, false)
+          await walk(-direction, walk_entry, config)
+          spine.state.addAnimation(0, config.idle, true, 0)
+
+          setTimeout(() => scheduleRandomAnimation(spine, config))
+          return
+        }
+      }
+
       const randomAnim = config.randoms[Math.floor(Math.random() * config.randoms.length)]
       console.info(`Do animation: ${randomAnim}`)
       spine.state.setAnimation(0, randomAnim, false)
       spine.state.addAnimation(0, config.idle, true, 0)
     }
-    scheduleRandomAnimation(spine, config)
+    setTimeout(() => scheduleRandomAnimation(spine, config))
   }, delay)
 }
 
@@ -92,7 +123,7 @@ async function doAThing(): Promise<void> {
   Assets.add({ alias: 'skeleton-data', src: 'app://get/model/model.json' })
   Assets.add({ alias: 'skeleton-atlas', src: 'app://get/model/sekai_atlas.atlas' })
   await Assets.load(['skeleton-data', 'skeleton-atlas'])
-  const spine = Spine.from({
+  spine = Spine.from({
     skeleton: 'skeleton-data',
     atlas: 'skeleton-atlas'
   })
@@ -105,6 +136,79 @@ async function doAThing(): Promise<void> {
     scheduleRandomAnimation(spine, config)
   })
   app.stage.addChild(spine)
+}
+
+async function in_ticker(
+  on_step: (ticker: Ticker) => void,
+  when_finish: (ticker: Ticker) => boolean,
+  on_finish: () => void
+): Promise<void> {
+  const task = new Promise<void>((resolve) => {
+    const ticker = new Ticker()
+    ticker.add(() => {
+      on_step(ticker)
+      if (when_finish(ticker)) {
+        on_finish()
+        resolve()
+        ticker.destroy()
+      }
+    })
+    ticker.start()
+  })
+  await task
+}
+
+async function run_walk(
+  animation: (now_x: number) => void,
+  time_ms: number,
+  direction: number,
+  size: { width: number; height: number },
+  position: { x: number; y: number },
+  on_finish: () => void
+): Promise<void> {
+  let progress = 0
+  let now_x = position.x
+  const step = 2
+  if (time_ms >= 30) {
+    await in_ticker(
+      (ticker) => {
+        progress = progress + ticker.elapsedMS / time_ms
+        progress = Math.min(progress, 1)
+        now_x += (step * direction) / 2
+        animation(now_x)
+      },
+      () => progress >= 1 || now_x + 165 >= size.width,
+      () => on_finish()
+    )
+  }
+  animation(now_x)
+}
+
+async function walk(direction: number, entry: TrackEntry, config: Config): Promise<void> {
+  const size: { width: number; height: number } =
+    await window.electron.ipcRenderer.invoke('get-screen-size')
+  const position: { x: number; y: number } =
+    await window.electron.ipcRenderer.invoke('get-position')
+
+  await run_walk(
+    (now_x: number) => {
+      window.electron.ipcRenderer.send('move-window', {
+        x: now_x,
+        y: position.y
+      })
+    },
+    entry.animation!.duration * 1000,
+    direction,
+    size,
+    position,
+    () => {
+      spine.state.setAnimation(0, config.idle, true)
+    }
+  )
+}
+
+function flip(direction: number): void {
+  spine.scale.x = Math.abs(spine.scale.x) * direction
 }
 
 init()

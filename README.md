@@ -28,6 +28,9 @@ The structure of Config is as follows:
     "v2_m_happy_joy01_f",
     "v2_m_happy_laugh01_f",
     "v2_m_pure_joy01_f"
-  ]
+  ],
+  "enableWalk": true,
+  "walkProbability": 0.1,
+  "walkAnim": "v2_m_normal_walk01_f"
 }
 ```

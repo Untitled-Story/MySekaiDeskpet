@@ -3,4 +3,7 @@ export default interface Config {
   frequencyMin: number
   frequencyMax: number
   randoms: string[]
+  enableWalk: boolean
+  walkProbability: number
+  walkAnim: string
 }
