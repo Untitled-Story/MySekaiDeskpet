@@ -10,15 +10,14 @@ let spine: Spine
 
 function init(): void {
   window.addEventListener('DOMContentLoaded', async () => {
-    await doAThing()
+    await afterLoaded()
   })
 }
 
 function onMouseMove(e: MouseEvent): void {
   const deltaX = Math.abs(e.clientX - startX)
   const deltaY = Math.abs(e.clientY - startY)
-
-  if (deltaX > 10 || deltaY > 10) {
+  if (deltaX > 3 || deltaY > 3) {
     isDragging = true
     window.electron.ipcRenderer.send('move-window', {
       x: e.screenX - startX,
@@ -27,10 +26,9 @@ function onMouseMove(e: MouseEvent): void {
   }
 }
 
-function onMouseUp(_e: unknown): void {
+function onMouseUp(): void {
   document.removeEventListener('mousemove', onMouseMove)
   document.removeEventListener('mouseup', onMouseUp)
-
   if (!isDragging) {
     console.info('Clicked')
   }
@@ -49,39 +47,28 @@ async function scheduleRandomAnimation(spine: Spine, config: Config): Promise<vo
   }
   const delay = getRandomIntInclusive(config.frequencyMin, config.frequencyMax) * 1000
   console.info(`Next random animation delay: ${delay}ms`)
-
   randomIntervalTimer = setTimeout(async () => {
     if (!spine.destroyed && config.randoms?.length) {
       if (config.enableWalk) {
         if (Math.random() < config.walkProbability) {
           console.info('Trigger walk')
           let direction = Math.random() < 0.5 ? -1 : 1
-
-          // Left: 1, Right: -1
-
-          const size: { width: number; height: number } =
-            await window.electron.ipcRenderer.invoke('get-screen-size')
-          const position: { x: number; y: number } =
-            await window.electron.ipcRenderer.invoke('get-position')
-
+          const size = await window.electron.ipcRenderer.invoke('get-screen-size')
+          const position = await window.electron.ipcRenderer.invoke('get-position')
           if (direction == 1 && position.x - 200 <= 0) {
             direction = -1
           } else if (direction == -1 && position.x + 200 >= size.width) {
             direction = 1
           }
-
           console.info(`Confirm direction: ${direction == 1 ? 'left' : 'right'}`)
-
           flip(direction)
           const walk_entry = spine.state.setAnimation(0, config.walkAnim, false)
           await walk(-direction, walk_entry, config)
           spine.state.addAnimation(0, config.idle, true, 0)
-
           setTimeout(() => scheduleRandomAnimation(spine, config))
           return
         }
       }
-
       const randomAnim = config.randoms[Math.floor(Math.random() * config.randoms.length)]
       console.info(`Do animation: ${randomAnim}`)
       spine.state.setAnimation(0, randomAnim, false)
@@ -91,18 +78,16 @@ async function scheduleRandomAnimation(spine: Spine, config: Config): Promise<vo
   }, delay)
 }
 
-async function doAThing(): Promise<void> {
+async function afterLoaded(): Promise<void> {
   const overlay = document.getElementById('drag-overlay') as HTMLDivElement
   overlay.addEventListener('mousedown', (e) => {
     isDragging = false
     startX = e.clientX
     startY = e.clientY
-
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseup', onMouseUp)
   })
-
-  const applicationWrapper = document.getElementById('app')! as HTMLDivElement
+  const applicationWrapper = document.getElementById('app') as HTMLDivElement
   const app = new Application()
   await app.init({
     backgroundAlpha: 0,
@@ -114,19 +99,13 @@ async function doAThing(): Promise<void> {
   })
   app.canvas.id = 'app-canvas'
   applicationWrapper.appendChild(app.canvas)
-
   const data = await (await fetch('app://get/model/config.json')).text()
   const config: Config = JSON.parse(data)
-
   console.info('config', config)
-
   Assets.add({ alias: 'skeleton-data', src: 'app://get/model/model.json' })
   Assets.add({ alias: 'skeleton-atlas', src: 'app://get/model/sekai_atlas.atlas' })
   await Assets.load(['skeleton-data', 'skeleton-atlas'])
-  spine = Spine.from({
-    skeleton: 'skeleton-data',
-    atlas: 'skeleton-atlas'
-  })
+  spine = Spine.from({ skeleton: 'skeleton-data', atlas: 'skeleton-atlas' })
   spine.pivot.set(0.5)
   spine.scale.set(0.3)
   spine.x = app.screen.width / 2
@@ -185,11 +164,8 @@ async function run_walk(
 }
 
 async function walk(direction: number, entry: TrackEntry, config: Config): Promise<void> {
-  const size: { width: number; height: number } =
-    await window.electron.ipcRenderer.invoke('get-screen-size')
-  const position: { x: number; y: number } =
-    await window.electron.ipcRenderer.invoke('get-position')
-
+  const size = await window.electron.ipcRenderer.invoke('get-screen-size')
+  const position = await window.electron.ipcRenderer.invoke('get-position')
   await run_walk(
     (now_x: number) => {
       window.electron.ipcRenderer.send('move-window', {

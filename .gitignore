@@ -258,3 +258,4 @@ dist
 
 tests/
 model/
+/.idea/discord.xml
