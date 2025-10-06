@@ -32,7 +32,7 @@ The structure of Config is as follows:
   "enableWalk": true,
   "walkProbability": 0.1,
   "walkAnim": "v2_m_normal_walk01_f",
-  "enablePhysics": true,
+  "enablePhysics": false,
   "physicsSpeed": 5,
   "G": 9.8,
   "airResistance": 0.9,
