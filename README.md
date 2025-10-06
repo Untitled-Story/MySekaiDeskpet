@@ -8,7 +8,7 @@ Download your model using the following structure:
 
 ```
 Running Directory
-| - models
+| - model
 | | - config.json
 | | - model.json # The skeleton file in json
 | | - sekai_atlas.atlas
@@ -31,6 +31,30 @@ The structure of Config is as follows:
   ],
   "enableWalk": true,
   "walkProbability": 0.1,
-  "walkAnim": "v2_m_normal_walk01_f"
+  "walkAnim": "v2_m_normal_walk01_f",
+  "enablePhysics": true,
+  "physicsSpeed": 5,
+  "G": 9.8,
+  "airResistance": 0.9,
+  "footHeight": 25,
+  "dropEndAnim": "v2_w_pure_angry01_f"
 }
 ```
+
+## Configuration Explanation
+
+Here's the explanation for each configuration parameter:
+
+- **idle**: The animation to play when the character is idle.
+- **frequencyMin**: Minimum interval in seconds between random actions.
+- **frequencyMax**: Maximum interval in seconds between random actions.
+- **randoms**: List of animations that can be played randomly.
+- **enableWalk**: Whether to enable the character to walk randomly.
+- **walkProbability**: Probability of the character choosing to walk when performing a random action.
+- **walkAnim**: The animation to play when the character is walking.
+- **enablePhysics**: Whether to enable physics simulation for the character.
+- **physicsSpeed**: Speed multiplier for physics calculations.
+- **G**: Gravitational acceleration value.
+- **airResistance**: Air resistance coefficient affecting velocity decay.
+- **footHeight**: Height offset for the character's feet, used in collision detection.
+- **dropEndAnim**: The animation to play when the character lands after being dropped.

@@ -6,4 +6,10 @@ export default interface Config {
   enableWalk: boolean
   walkProbability: number
   walkAnim: string
+  enablePhysics: boolean
+  physicsSpeed: number
+  G: number
+  airResistance: number
+  footHeight: number
+  dropEndAnim: string
 }
